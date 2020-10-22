@@ -2,26 +2,49 @@ package main
 
 import (
 	"fmt"
-	"github.com/riandigitalent/IntroDatabase/sql-generic/config"
+	"log"
+
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/riandigitalent/IntroDatabase/sql-generic/config"
+	"github.com/riandigitalent/IntroDatabase/sql-orm/database"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"log"
 )
 
-func main(){
-	cfg,err := getConfig()
+func main() {
+	cfg, err := getConfig()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	_,err = initDB(cfg.Database)
+	db, err := initDB(cfg.Database)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+
+	database.InsertCustomer(database.CustomerORM{
+		FirstName:    "rian",
+		LastName:     "yunandar",
+		NpwpId:       "id-1",
+		Age:          10,
+		CustomerType: "Sultan",
+		Street:       "Str",
+		City:         "waykanan",
+		State:        "lampung",
+		ZipCode:      "35122",
+		PhoneNumber:  "08123234",
+	}, db)
+	database.GetCustomers(db)
+	database.DeleteCustomer(1, db)
+	database.UpdateCustomer(database.CustomerORM{PhoneNumber: "08162846"}, 2, db)
+
+	database.InsertAccount(database.AccountORM{
+		Balance:     15999,
+		AccountType: "Deposit",
+	}, 2, db)
 }
 
 func getConfig() (config.Config, error) {
@@ -48,6 +71,10 @@ func initDB(dbConfig config.Database) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	db.AutoMigrate(
+		&database.CustomerORM{},
+		&database.AccountORM{},
+	)
 
 	log.Println("db successfully connected")
 
